@@ -11,8 +11,7 @@
         'sale_qaqc',
     ],
     'data': [
-        'views/menu.xml',
-        'views/qaqc_coa.xml',
+        'views/sale_order.xml',
     ],
     'qweb': [
         # 'static/src/xml/cashback_templates.xml',
