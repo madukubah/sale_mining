@@ -12,6 +12,7 @@
     ],
     'data': [
         'views/sale_order.xml',
+        'views/product_template.xml',
     ],
     'qweb': [
         # 'static/src/xml/cashback_templates.xml',
