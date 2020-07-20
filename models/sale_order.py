@@ -105,9 +105,9 @@ class SaleOrderLine(models.Model):
                     self.name = 'Penalty'
             # moisture price adjustment
             elif( self.product_id.mining_type == 'moisture' ):
-                if( coa.moisture_spec < contract.moisture_spec_from ) : 
+                if( coa.mc_spec < contract.moisture_spec_from ) : 
                     self.price_unit = contract.base_price * contract.moisture_price_adjustment_bonus
                     self.name = 'Bonus'
-                if( coa.moisture_spec > contract.moisture_spec_to ) : 
+                if( coa.mc_spec > contract.moisture_spec_to ) : 
                     self.price_unit = contract.base_price * contract.moisture_price_adjustment_penalty * (-1)
                     self.name = 'Penalty'
