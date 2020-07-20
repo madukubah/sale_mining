@@ -7,8 +7,8 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
-    coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict" )
-    # shipping_id = fields.Many2one("shipping.shipping", string="Shipping", required=True, store=True, ondelete="restrict", domain=[ ('state','=',"approve")], readonly=True, states={'draft': [('readonly', False)]}  )
+    # coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict" )
+    coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict", domain=[ ('state','=',"final")], readonly=True, states={'draft': [('readonly', False)]}  )
     contract_id = fields.Many2one(
 		'sale.contract',
 		string='Contract', 
@@ -23,6 +23,14 @@ class SaleOrder(models.Model):
         readonly=True,
         related="partner_id.park_industry_id",
 		)
+
+    @api.multi
+    def action_confirm(self):
+        super(SaleOrder, self).action_confirm()
+        QaqcCoaSudo = self.env['qaqc.coa'].sudo()
+        coa = QaqcCoaSudo.search([ ("id", '=', self.coa_id.id ) ])
+        coa.button_done()
+        return True
 
     @api.onchange("coa_id" )
     def _set_orderline(self):
@@ -39,9 +47,9 @@ class SaleOrder(models.Model):
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
-    coa_id = fields.Many2one("qaqc.coa", related='order_id.coa_id', store=True, readonly=True ,string="QAQC COA", required=True, ondelete="restrict" )
-    contract_id = fields.Many2one("sale.contract", related='order_id.contract_id', store=True, readonly=True ,string="Contract", required=True, ondelete="restrict" )
-    park_industry_id = fields.Many2one("sale.park.industry", related='order_id.park_industry_id', store=True, readonly=True ,string="Park Industry", required=True, ondelete="restrict" )
+    coa_id = fields.Many2one("qaqc.coa", related='order_id.coa_id', store=True, readonly=True ,string="QAQC COA", ondelete="restrict" )
+    contract_id = fields.Many2one("sale.contract", related='order_id.contract_id', store=True, readonly=True ,string="Contract", ondelete="restrict" )
+    park_industry_id = fields.Many2one("sale.park.industry", related='order_id.park_industry_id', store=True, readonly=True ,string="Park Industry", ondelete="restrict" )
     
     @api.multi
     @api.onchange('product_id')
@@ -63,8 +71,6 @@ class SaleOrderLine(models.Model):
         super(SaleOrderLine, self).product_uom_change()
 
         self.set_price_unit()
-        # if( self.order_id.contract_id and self.order_id.park_industry_id ) :
-        #     self.price_unit = self.order_id.contract_id.base_price * self.order_id.park_industry_id.currency_80_pc
 
     def set_price_unit(self):
         if( self.contract_id and self.park_industry_id ) :
