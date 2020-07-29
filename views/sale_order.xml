@@ -10,6 +10,7 @@
             <field name="partner_id" position="after">
                 <field name="park_industry_id" />
                 <field name="contract_id" />
+                <field name="mining_payment_type" />
             </field>
             <field name="payment_term_id" position="after">
                 <field name="coa_id" />

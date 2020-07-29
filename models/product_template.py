@@ -18,4 +18,4 @@ class ProductTemplate(models.Model):
         ('ni', 'Nickel'),
         ('fe', 'Fe'),
         ('moisture', 'Moisture'),
-    ], string='Sale Mining Type',  store=True, default='base')
+    ], string='Sale Mining Type',  store=True)

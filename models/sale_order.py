@@ -8,7 +8,7 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
 
     # coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict" )
-    coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict", domain=[ ('state','=',"final")], readonly=True, states={'draft': [('readonly', False)]}  )
+    coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict", domain=[ "|", ('state','=',"final"), ('state','=',"draft")], readonly=True, states={'draft': [('readonly', False)]}  )
     contract_id = fields.Many2one(
 		'sale.contract',
 		string='Contract', 
@@ -23,21 +23,29 @@ class SaleOrder(models.Model):
         readonly=True,
         related="partner_id.park_industry_id",
 		)
+    mining_payment_type = fields.Selection([
+        ('80_pc', '80 %'), 
+		('20_pc', '20 %'),
+        ], string='Payment Type', required=True, copy=False, index=True, default='80_pc')
+
 
     @api.multi
     def action_confirm(self):
         super(SaleOrder, self).action_confirm()
-        QaqcCoaSudo = self.env['qaqc.coa'].sudo()
-        coa = QaqcCoaSudo.search([ ("id", '=', self.coa_id.id ) ])
-        coa.button_done()
+        # QaqcCoaSudo = self.env['qaqc.coa'].sudo()
+        # coa = QaqcCoaSudo.search([ ("id", '=', self.coa_id.id ) ])
+        # coa.button_done()
         return True
 
     @api.onchange("coa_id" )
     def _set_orderline(self):
-        _logger.warning( "_set_orderline" )
-        _logger.warning( self.coa_id.quantity )
         for line in self.order_line :
             line.product_uom_qty = self.coa_id.quantity
+
+    @api.onchange("mining_payment_type" )
+    def _set_orderline(self):
+        for line in self.order_line :
+            line.set_price_unit()
 
     @api.onchange("partner_id" )
     def onchange_contract_id(self):
@@ -55,17 +63,11 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def product_id_change(self):
         super(SaleOrderLine, self).product_id_change()
-        
-        _logger.warning( "_set_orderline" )
-        _logger.warning( self.product_id.name )
 
         if( self.coa_id ) :
             self.product_uom_qty = self.coa_id.quantity
 
         self.set_price_unit()
-        # if( self.order_id.contract_id and self.order_id.park_industry_id ) :
-        #     self.price_unit = self.order_id.contract_id.base_price * self.order_id.park_industry_id.currency_80_pc
-    
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
         super(SaleOrderLine, self).product_uom_change()
@@ -74,40 +76,39 @@ class SaleOrderLine(models.Model):
 
     def set_price_unit(self):
         if( self.contract_id and self.park_industry_id ) :
-            _logger.warning( "set_price_unit" )
-            _logger.warning( self.product_id.mining_type )
-
             coa = self.coa_id
             contract = self.contract_id
             park_industry = self.park_industry_id
+            if( self.order_id.mining_payment_type == "80_pc" ) :
+                if( self.product_id.mining_type == 'base' ):
+                    self.price_unit = contract.base_price * park_industry.currency_80_pc
+                else :
+                    self.price_unit = 0
 
-            _logger.warning( coa.ni_spec )
-            _logger.warning( contract.ni_spec )
-
-            if( self.product_id.mining_type == 'base' ):
-                self.price_unit = contract.base_price * park_industry.currency_80_pc
-
-            # nickel price adjustment
-            elif( self.product_id.mining_type == 'ni' ):
-                if( coa.ni_spec > contract.ni_spec ) : 
-                    self.price_unit = contract.base_price * contract.ni_price_adjustment_bonus
-                    self.name = 'Bonus'
-                if( coa.ni_spec < contract.ni_spec ) : 
-                    self.price_unit = contract.base_price * contract.ni_price_adjustment_penalty * (-1)
-                    self.name = 'Penalty'
-            # fe price adjustment
-            elif( self.product_id.mining_type == 'fe' ):
-                if( coa.fe_spec > contract.fe_spec_to ) : 
-                    self.price_unit = contract.base_price * contract.fe_price_adjustment_bonus
-                    self.name = 'Bonus'
-                if( coa.fe_spec < contract.fe_spec_from ) : 
-                    self.price_unit = contract.base_price * contract.fe_price_adjustment_penalty * (-1)
-                    self.name = 'Penalty'
-            # moisture price adjustment
-            elif( self.product_id.mining_type == 'moisture' ):
-                if( coa.mc_spec < contract.moisture_spec_from ) : 
-                    self.price_unit = contract.base_price * contract.moisture_price_adjustment_bonus
-                    self.name = 'Bonus'
-                if( coa.mc_spec > contract.moisture_spec_to ) : 
-                    self.price_unit = contract.base_price * contract.moisture_price_adjustment_penalty * (-1)
-                    self.name = 'Penalty'
+            elif( self.order_id.mining_payment_type == "20_pc" ) : 
+                if( self.product_id.mining_type == 'base' ):
+                    self.price_unit = contract.base_price * park_industry.currency_20_pc
+                # nickel price adjustment
+                elif( self.product_id.mining_type == 'ni' ):
+                    if( coa.ni_spec > contract.ni_spec ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.ni_price_adjustment_bonus
+                        self.name = 'Bonus'
+                    if( coa.ni_spec < contract.ni_spec ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.ni_price_adjustment_penalty * (-1)
+                        self.name = 'Penalty'
+                # fe price adjustment
+                elif( self.product_id.mining_type == 'fe' ):
+                    if( coa.fe_spec > contract.fe_spec_to ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.fe_price_adjustment_bonus
+                        self.name = 'Bonus'
+                    if( coa.fe_spec < contract.fe_spec_from ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.fe_price_adjustment_penalty * (-1)
+                        self.name = 'Penalty'
+                # moisture price adjustment
+                elif( self.product_id.mining_type == 'moisture' ):
+                    if( coa.mc_spec < contract.moisture_spec_from ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.moisture_price_adjustment_bonus
+                        self.name = 'Bonus'
+                    if( coa.mc_spec > contract.moisture_spec_to ) : 
+                        self.price_unit = park_industry.currency_20_pc * contract.moisture_price_adjustment_penalty * (-1)
+                        self.name = 'Penalty'
