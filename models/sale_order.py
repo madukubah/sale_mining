@@ -8,7 +8,12 @@ class SaleOrder(models.Model):
     _inherit = "sale.order"
 
     # coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict" )
-    coa_id = fields.Many2one("qaqc.coa", string="QAQC COA", required=True, store=True, ondelete="restrict", domain=[ "|", ('state','=',"final"), ('state','=',"draft")], readonly=True, states={'draft': [('readonly', False)]}  )
+    coa_id = fields.Many2one("qaqc.coa", 
+        string="QAQC COA", 
+        required=True, store=True, 
+        ondelete="restrict", domain=[ "|", "&",('state','=',"final"), ('state','=',"draft") , ('surveyor_id.surveyor','=',"intertek") ], 
+        readonly=True, states={'draft': [('readonly', False)]}  
+        )
     contract_id = fields.Many2one(
 		'sale.contract',
 		string='Contract', 
