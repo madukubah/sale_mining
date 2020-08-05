@@ -87,7 +87,7 @@ class SaleOrderLine(models.Model):
             if( self.order_id.mining_payment_type == "80_pc" ) :
                 if( self.product_id.mining_type == 'base' ):
                     self.price_unit = contract.base_price * self.order_id.currency
-                else :
+                elif( ( self.product_id.mining_type == 'ni' ) or ( self.product_id.mining_type == 'fe' ) or ( self.product_id.mining_type == 'moisture' ) ):
                     self.price_unit = 0
 
             elif( self.order_id.mining_payment_type == "20_pc" ) : 
