@@ -19,7 +19,7 @@ class SaleOrder(models.Model):
 		string='Contract', 
         store=True,
         readonly=True,
-        related="partner_id.contract_id",
+        related="coa_id.sale_contract_id",
 		)
     park_industry_id = fields.Many2one(
 		'sale.park.industry',
@@ -44,7 +44,12 @@ class SaleOrder(models.Model):
         return True
 
     @api.onchange("coa_id" )
-    def _set_orderline(self):
+    def onchange_coa_id(self):
+        if self.coa_id : 
+            sale_contract_id = self.coa_id.sale_contract_id
+            if sale_contract_id : 
+                self.partner_id = sale_contract_id.factory_id
+
         for line in self.order_line :
             line.product_uom_qty = self.coa_id.quantity
 
