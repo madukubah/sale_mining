@@ -88,7 +88,6 @@ class SaleOrderLine(models.Model):
         if( self.contract_id and self.park_industry_id ) :
             coa = self.coa_id
             contract = self.contract_id
-            park_industry = self.park_industry_id
             if( self.order_id.mining_payment_type == "80_pc" ) :
                 if( self.product_id.mining_type == 'base' ):
                     self.price_unit = contract.base_price * self.order_id.currency
