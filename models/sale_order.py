@@ -99,27 +99,43 @@ class SaleOrderLine(models.Model):
                     self.price_unit = contract.base_price * self.order_id.currency
                 # nickel price adjustment
                 elif( self.product_id.mining_type == 'ni' ):
+                    diff = abs( coa.ni_spec - contract.ni_spec )
+                    contract.ni_price_adjustment_level = contract.ni_price_adjustment_level if contract.ni_price_adjustment_level else 1.0
+                    levels = diff / contract.ni_price_adjustment_level
                     if( coa.ni_spec > contract.ni_spec ) : 
-                        self.price_unit = self.order_id.currency * contract.ni_price_adjustment_bonus
+                        self.price_unit = self.order_id.currency * contract.ni_price_adjustment_bonus * levels
                         self.name = 'Ni Bonus'
                     if( coa.ni_spec < contract.ni_spec ) : 
-                        self.price_unit = self.order_id.currency * contract.ni_price_adjustment_penalty * (-1)
+                        self.price_unit = self.order_id.currency * contract.ni_price_adjustment_penalty * levels * (-1)
                         self.name = 'Ni Penalty'
+                        if( contract.use_rejection and ( coa.ni_spec < contract.ni_rejection_spec ) ) : 
+                            diff = abs( coa.ni_spec - contract.ni_rejection_spec )
+                            contract.ni_price_adjustment_rejection_level = contract.ni_price_adjustment_rejection_level if contract.ni_price_adjustment_rejection_level else 1.0
+                            levels = diff / contract.ni_price_adjustment_rejection_level
+                            self.price_unit = self.order_id.currency * contract.ni_price_adjustment_rejection * levels * (-1)
+                            self.name = 'Ni Reject'
+
                 # fe price adjustment
                 elif( self.product_id.mining_type == 'fe' ):
+                    diff = abs( coa.fe_spec > contract.fe_spec_to )
+                    contract.fe_price_adjustment_level = contract.fe_price_adjustment_level if contract.fe_price_adjustment_level else 1.0
+                    levels = diff / contract.fe_price_adjustment_level
                     if( coa.fe_spec > contract.fe_spec_to ) : 
-                        self.price_unit = self.order_id.currency * contract.fe_price_adjustment_bonus
+                        self.price_unit = self.order_id.currency * contract.fe_price_adjustment_bonus * levels
                         self.name = 'Fe Bonus'
                     if( coa.fe_spec < contract.fe_spec_from ) : 
-                        self.price_unit = self.order_id.currency * contract.fe_price_adjustment_penalty * (-1)
+                        self.price_unit = self.order_id.currency * contract.fe_price_adjustment_penalty * levels * (-1)
                         self.name = 'Fe Penalty'
                 # moisture price adjustment
                 elif( self.product_id.mining_type == 'moisture' ):
+                    diff = abs( coa.mc_spec < contract.moisture_spec_from )
+                    contract.moisture_price_adjustment_level = contract.moisture_price_adjustment_level if contract.moisture_price_adjustment_level else 1.0
+                    levels = diff / contract.moisture_price_adjustment_level
                     if( coa.mc_spec < contract.moisture_spec_from ) : 
-                        self.price_unit = self.order_id.currency * contract.moisture_price_adjustment_bonus
+                        self.price_unit = self.order_id.currency * contract.moisture_price_adjustment_bonus * levels
                         self.name = 'MC Bonus'
                     if( coa.mc_spec > contract.moisture_spec_to ) : 
-                        self.price_unit = self.order_id.currency * contract.moisture_price_adjustment_penalty * (-1)
+                        self.price_unit = self.order_id.currency * contract.moisture_price_adjustment_penalty * levels * (-1)
                         self.name = 'MC Penalty'
 
 
