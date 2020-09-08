@@ -5,10 +5,11 @@
         <field name="model">product.template</field>
         <field name="mode">primary</field>
         <field name="priority" eval="8" />
-        <field name="inherit_id" ref="product.product_template_form_view"/>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
         <field name="arch" type="xml">
             <field name="categ_id" position="after">
-                <field name="mining_type"/>
+                <field name="base_price"/>
+                <field name="element_id"/>
             </field>
         </field>
     </record>

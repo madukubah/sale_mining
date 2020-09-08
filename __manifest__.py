@@ -8,7 +8,7 @@
     'depends': [
         'sale_contract',
         'shipping',
-        'sale_qaqc',
+        'mining_qaqc',
     ],
     'data': [
         'views/sale_order.xml',

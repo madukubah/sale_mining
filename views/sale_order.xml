@@ -13,6 +13,7 @@
                 <field name="mining_payment_type" />
             </field>
             <field name="payment_term_id" position="after">
+                <field name="shipping_id" />
                 <field name="coa_id" />
                 <field name="currency" />
             </field>
