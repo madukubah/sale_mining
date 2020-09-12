@@ -15,10 +15,3 @@ class ProductTemplate(models.Model):
     
     base_price	=  fields.Boolean(string="Base Price", store=True, default=False )
     element_id = fields.Many2one("qaqc.chemical.element", string="Element", ondelete="restrict" )
-    
-    # mining_type = fields.Selection([
-    #     ('base', 'Base'),
-    #     ('ni', 'Nickel'),
-    #     ('fe', 'Fe'),
-    #     ('moisture', 'Moisture'),
-    # ], string='Sale Mining Type',  store=True)

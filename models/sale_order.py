@@ -1,16 +1,13 @@
 from odoo import api, exceptions, fields, models, _, SUPERUSER_ID
 import odoo.addons.decimal_precision as dp
+from odoo.tools import float_is_zero, float_compare, DEFAULT_SERVER_DATETIME_FORMAT
 import logging
+from odoo.exceptions import UserError, ValidationError
 
 _logger = logging.getLogger(__name__)
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
-
-    # partner_id = fields.Many2one('res.partner', 
-    #     string='Customer', readonly=True, 
-    #     related="contract_id.factory_id",
-    #     required=True, change_default=True, index=True, track_visibility='always')
 
     shipping_id = fields.Many2one("shipping.order", 
         string="Shipping", 
@@ -24,7 +21,7 @@ class SaleOrder(models.Model):
         string="QAQC COA", 
         related="shipping_id.coa_id",
         store=True, 
-        ondelete="restrict", 
+        ondelete="restrict",
         # domain=[ "&",('state','=',"final") , ('surveyor_id.surveyor','=',"intertek") ], 
         readonly=True, 
         # states={'draft': [('readonly', False)]}  
@@ -66,6 +63,9 @@ class SaleOrder(models.Model):
 
     @api.onchange("coa_id" )
     def onchange_coa_id(self):
+        if( self.coa_id ) :
+            self.warehouse_id = self.coa_id.warehouse_id
+
         for line in self.order_line :
             line.product_uom_qty = self.coa_id.quantity
 
@@ -95,6 +95,7 @@ class SaleOrderLine(models.Model):
             self.product_uom_qty = self.coa_id.quantity
 
         self.set_price_unit()
+        
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
         super(SaleOrderLine, self).product_uom_change()
@@ -104,6 +105,7 @@ class SaleOrderLine(models.Model):
         if( self.contract_id and self.coa_id ) :
             coa = self.coa_id
             contract = self.contract_id
+
             if( self.order_id.mining_payment_type == "80_pc" ) :
                 if( self.product_id.base_price ):
                     self.price_unit = contract.base_price * self.order_id.currency
@@ -128,3 +130,45 @@ class SaleOrderLine(models.Model):
                         result = _contract_specification._compute_price_based_on_rules( _coa_element_spec )
                         self.name = result["name"]
                         self.price_unit = result["price"] * self.order_id.currency
+    
+
+    @api.multi
+    def _action_procurement_create(self):
+        """
+        Create procurements based on quantity ordered. If the quantity is increased, new
+        procurements are created. If the quantity is decreased, no automated action is taken.
+        """
+        precision = self.env['decimal.precision'].precision_get('Product Unit of Measure')
+        new_procs = self.env['procurement.order']  # Empty recordset
+        Rule = self.env['procurement.rule']  
+
+        for line in self:
+            if line.state != 'sale' or not line.product_id._need_procurement():
+                continue
+            qty = 0.0
+            for proc in line.procurement_ids.filtered(lambda r: r.state != 'cancel'):
+                qty += proc.product_qty
+            if float_compare(qty, line.product_uom_qty, precision_digits=precision) >= 0:
+                continue
+
+            if not line.order_id.procurement_group_id:
+                vals = line.order_id._prepare_procurement_group()
+                line.order_id.procurement_group_id = self.env["procurement.group"].create(vals)
+
+            vals = line._prepare_order_line_procurement(group_id=line.order_id.procurement_group_id.id)
+            vals['product_qty'] = line.product_uom_qty - qty
+            # find procurement.rule
+            rule = Rule.search([ ("location_src_id", '=', self.coa_id.location_id.id ), ("warehouse_id", '=', self.coa_id.warehouse_id.id ) ])
+            if len(rule) > 0 :
+                vals['rule_id'] = rule[0].id
+            else :
+                raise UserError(_('Please Set Up Procurement Rule And Picking Type in Location Properly') )
+                
+
+            new_proc = self.env["procurement.order"].with_context(procurement_autorun_defer=True).create(vals)
+            new_proc.message_post_with_view('mail.message_origin_link',
+                values={'self': new_proc, 'origin': line.order_id},
+                subtype_id=self.env.ref('mail.mt_note').id)
+            new_procs += new_proc
+        new_procs.run()
+        return new_procs
