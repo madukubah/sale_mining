@@ -9,6 +9,7 @@
         'sale_contract',
         'shipping',
         'mining_qaqc',
+        'sale_stock',
     ],
     'data': [
         'views/sale_order.xml',

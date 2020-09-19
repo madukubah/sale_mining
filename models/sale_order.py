@@ -50,9 +50,6 @@ class SaleOrder(models.Model):
     @api.multi
     def action_confirm(self):
         super(SaleOrder, self).action_confirm()
-        # QaqcCoaSudo = self.env['qaqc.coa'].sudo()
-        # coa = QaqcCoaSudo.search([ ("id", '=', self.coa_id.id ) ])
-        # coa.button_done()
         return True
 
     @api.onchange("contract_id" )
@@ -90,46 +87,49 @@ class SaleOrderLine(models.Model):
     @api.onchange('product_id')
     def product_id_change(self):
         super(SaleOrderLine, self).product_id_change()
+        for line in self:
+            if( line.coa_id and line.product_id ) :
+                if( line.product_id.base_price and line.product_id.type == "product" ) :
+                    line.product_uom_qty = line.coa_id.quantity
 
-        if( self.coa_id ) :
-            self.product_uom_qty = self.coa_id.quantity
-
-        self.set_price_unit()
+            line.set_price_unit()
         
     @api.onchange('product_uom', 'product_uom_qty')
     def product_uom_change(self):
         super(SaleOrderLine, self).product_uom_change()
-        self.set_price_unit()
+        for line in self:
+            line.set_price_unit()
 
     def set_price_unit(self):
-        if( self.contract_id and self.coa_id ) :
-            coa = self.coa_id
-            contract = self.contract_id
+        for line in self:
+            if( line.contract_id and line.coa_id ) :
+                coa = line.coa_id
+                contract = line.contract_id
 
-            if( self.order_id.mining_payment_type == "80_pc" ) :
-                if( self.product_id.base_price ):
-                    self.price_unit = contract.base_price * self.order_id.currency
-                elif( self.product_id.element_id ):
-                    self.price_unit = 0  
-            elif( self.order_id.mining_payment_type == "20_pc" ) : 
-                if( self.product_id.base_price ):
-                    self.price_unit = contract.base_price * self.order_id.currency
-                if( self.product_id.element_id ):
-                    _coa_element_spec = None
-                    _contract_specification = None
-                    for element_spec in coa.element_specs :
-                        if element_spec.element_id == self.product_id.element_id :
-                            _coa_element_spec = element_spec
-                            break
+                if( line.order_id.mining_payment_type == "80_pc" ) :
+                    if( line.product_id.base_price ):
+                        line.price_unit = contract.base_price * line.order_id.currency
+                    elif( line.product_id.element_id ):
+                        line.price_unit = 0  
+                elif( line.order_id.mining_payment_type == "20_pc" ) : 
+                    if( line.product_id.base_price ):
+                        line.price_unit = contract.base_price * line.order_id.currency
+                    if( line.product_id.element_id ):
+                        _coa_element_spec = None
+                        _contract_specification = None
+                        for element_spec in coa.element_specs :
+                            if element_spec.element_id == line.product_id.element_id :
+                                _coa_element_spec = element_spec
+                                break
 
-                    for specification in contract.specifications :
-                        if specification.element_id == self.product_id.element_id :
-                            _contract_specification = specification
-                            break
-                    if( _coa_element_spec and _contract_specification ) :
-                        result = _contract_specification._compute_price_based_on_rules( _coa_element_spec )
-                        self.name = result["name"]
-                        self.price_unit = result["price"] * self.order_id.currency
+                        for specification in contract.specifications :
+                            if specification.element_id == line.product_id.element_id :
+                                _contract_specification = specification
+                                break
+                        if( _coa_element_spec and _contract_specification ) :
+                            result = _contract_specification._compute_price_based_on_rules( _coa_element_spec )
+                            line.name = result["name"]
+                            line.price_unit = result["price"] * line.order_id.currency
     
 
     @api.multi
@@ -158,7 +158,7 @@ class SaleOrderLine(models.Model):
             vals = line._prepare_order_line_procurement(group_id=line.order_id.procurement_group_id.id)
             vals['product_qty'] = line.product_uom_qty - qty
             # find procurement.rule
-            rule = Rule.search([ ("location_src_id", '=', self.coa_id.location_id.id ), ("warehouse_id", '=', self.coa_id.warehouse_id.id ) ])
+            rule = Rule.search([ ("location_src_id", '=', line.coa_id.location_id.id ), ("warehouse_id", '=', line.coa_id.warehouse_id.id ) ])
             if len(rule) > 0 :
                 vals['rule_id'] = rule[0].id
             else :
