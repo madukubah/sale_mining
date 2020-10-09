@@ -26,6 +26,13 @@ class SaleOrder(models.Model):
         readonly=True, 
         # states={'draft': [('readonly', False)]}  
         )
+    
+    income_account_id = fields.Many2one('account.account', 
+        string='Income Account', 
+        required=True,
+        domain=[('deprecated', '=', False)], 
+        )
+
     contract_id = fields.Many2one(
 		'sale.contract',
 		string='Contract', 
@@ -76,9 +83,20 @@ class SaleOrder(models.Model):
         for line in self.order_line :
             line.product_id_change()
 
+    @api.onchange("income_account_id" )
+    def _onchange_income_account_id(self):
+        for line in self.order_line :
+            line.product_id_change()
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
 
+    income_account_id = fields.Many2one('account.account', 
+        string='Income Account', 
+        related='order_id.income_account_id',
+        readonly=True,
+        domain=[('deprecated', '=', False)], 
+        )
     coa_id = fields.Many2one("qaqc.coa.order", related='order_id.coa_id', store=True, readonly=True ,string="QAQC COA", ondelete="restrict" )
     contract_id = fields.Many2one("sale.contract", related='order_id.contract_id', store=True, readonly=True ,string="Contract", ondelete="restrict" )
     park_industry_id = fields.Many2one("sale.park.industry", related='order_id.park_industry_id', store=True, readonly=True ,string="Park Industry", ondelete="restrict" )
@@ -91,6 +109,8 @@ class SaleOrderLine(models.Model):
             if( line.coa_id and line.product_id ) :
                 if( line.product_id.base_price and line.product_id.type == "product" ) :
                     line.product_uom_qty = line.coa_id.quantity
+                if( line.income_account_id ) :
+                    line.product_id.write({"property_account_income_id" : line.income_account_id.id })
 
             line.set_price_unit()
         

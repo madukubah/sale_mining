@@ -16,6 +16,7 @@
                 <field name="shipping_id" />
                 <field name="coa_id" />
                 <field name="currency" />
+                <field name="income_account_id" />
             </field>
         </field>
     </record>
