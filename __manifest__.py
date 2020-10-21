@@ -8,7 +8,7 @@
     'depends': [
         'sale_contract',
         'shipping',
-        'mining_qaqc',
+        'mining_qaqc_chemical_element',
         'sale_stock',
     ],
     'data': [

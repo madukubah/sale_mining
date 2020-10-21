@@ -24,8 +24,8 @@ class StockPicking(models.Model):
                 shipping = ShippingSudo.search([ ("id", '=', sale_id.shipping_id.id ) ])
                 barge_activity = BargeActivitySudo.search([ ("id", '=', shipping.barge_activity_id.id ) ])
                 if( coa and shipping and barge_activity ):
-                    coa.button_done()
-                    shipping.button_done()
-                    barge_activity.button_done()
+                    coa.action_done()
+                    shipping.action_done()
+                    barge_activity.action_done()
                 else : 
                     raise UserError(_('Assay Result Barge, Shipping and Barging File is Required To Do This Action') )

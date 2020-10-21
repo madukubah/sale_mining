@@ -13,7 +13,7 @@ class SaleOrder(models.Model):
         string="Shipping", 
         required=True, store=True, 
         ondelete="restrict", 
-        domain=[ ('state','=',"approve") ], 
+        domain=[ ('state','=',"confirm") ], 
         readonly=True, 
         states={'draft': [('readonly', False)]}  
         )
@@ -150,7 +150,6 @@ class SaleOrderLine(models.Model):
                             result = _contract_specification._compute_price_based_on_rules( _coa_element_spec )
                             line.name = result["name"]
                             line.price_unit = result["price"] * line.order_id.currency
-    
 
     @api.multi
     def _action_procurement_create(self):
