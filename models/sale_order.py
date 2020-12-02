@@ -30,7 +30,7 @@ class SaleOrder(models.Model):
     income_account_id = fields.Many2one('account.account', 
         string='Income Account', 
         required=True,
-        domain=[('deprecated', '=', False)], 
+        domain=[('deprecated', '=', False), ('user_type_id', '=', 14 ) ], 
         )
 
     contract_id = fields.Many2one(
