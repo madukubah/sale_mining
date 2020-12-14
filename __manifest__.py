@@ -10,10 +10,13 @@
         'shipping',
         'mining_qaqc_chemical_element',
         'sale_stock',
+        'sales_team',
     ],
     'data': [
         'views/sale_order.xml',
         'views/product_template.xml',
+
+        'security/ir.model.access.csv',
     ],
     'qweb': [
         # 'static/src/xml/cashback_templates.xml',

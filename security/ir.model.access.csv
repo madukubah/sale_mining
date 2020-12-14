@@ -1,3 +1,5 @@
 id,name,model_id/id,group_id/id,perm_read,perm_write,perm_create,perm_unlink
-qaqc_coa_acces_right_manager,qaqc_coa_acces_right_manager,model_qaqc_coa,qaqc_group_manager,1,1,1,1
-qaqc_coa_acces_right_user,qaqc_coa_acces_right_user,model_qaqc_coa,qaqc_group_user,1,1,1,0
+sales_team_element_spec_acces_right_manager,sales_team_element_spec_acces_right_manager,mining_qaqc.model_qaqc_element_spec,sales_team.group_sale_manager,1,0,0,0
+sales_team_qaqc_coa_acces_right_manager,sales_team_qaqc_coa_acces_right_manager,mining_qaqc.model_qaqc_coa_order,sales_team.group_sale_manager,1,0,0,0
+,,,,,,,
+sales_team_account_type_acces_right_manager,sales_team_account_type_acces_right_manager,account.model_account_account_type,sales_team.group_sale_manager,1,0,0,0
