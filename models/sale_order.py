@@ -128,12 +128,14 @@ class SaleOrderLine(models.Model):
 
                 if( line.order_id.mining_payment_type == "80_pc" ) :
                     if( line.product_id.base_price ):
-                        line.price_unit = contract.base_price * line.order_id.currency
+                        base_price = line.contract_id.get_base_price_amount(line.coa_id.id , line.contract_id.id )
+                        line.price_unit = base_price * line.order_id.currency
                     elif( line.product_id.element_id ):
                         line.price_unit = 0  
                 elif( line.order_id.mining_payment_type == "20_pc" ) : 
                     if( line.product_id.base_price ):
-                        line.price_unit = contract.base_price * line.order_id.currency
+                        base_price = line.contract_id.get_base_price_amount(line.coa_id.id , line.contract_id.id )
+                        line.price_unit = base_price * line.order_id.currency
                     if( line.product_id.element_id ):
                         _coa_element_spec = None
                         _contract_specification = None
