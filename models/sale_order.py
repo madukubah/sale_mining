@@ -52,7 +52,7 @@ class SaleOrder(models.Model):
 		('20_pc', 'Full Payment 20 %'),
         ], string='Payment Type', required=True, copy=False, index=True, default='80_pc')
     currency = fields.Float( string="Currency (IDR)", required=True, default=0 )
-
+    hpm_price = fields.Float( string="HPM + Shipping Cost", default=0, digits=dp.get_precision('Product Unit of Measure') )
 
     @api.multi
     def action_confirm(self):
@@ -73,20 +73,22 @@ class SaleOrder(models.Model):
         for line in self.order_line :
             line.product_uom_qty = self.coa_id.quantity
 
-    @api.onchange("mining_payment_type", "currency" )
+    @api.onchange("coa_id", "contract_id" )
+    def compute_hpm(self):
+        if( self.coa_id, self.contract_id ) :
+            base_price = self.contract_id.get_base_price_amount(self.coa_id.id , self.contract_id.id )
+            self.hpm_price = base_price
+
+    @api.onchange("mining_payment_type", "currency", "hpm_price" )
     def _set_orderline(self):
         for line in self.order_line :
             line.set_price_unit()
 
-    @api.onchange("partner_id" )
-    def _onchange_partner_id(self):
-        for line in self.order_line :
-            line.product_id_change()
-
-    @api.onchange("income_account_id" )
+    @api.onchange("income_account_id", "partner_id" )
     def _onchange_income_account_id(self):
         for line in self.order_line :
             line.product_id_change()
+    
 
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
@@ -128,14 +130,12 @@ class SaleOrderLine(models.Model):
 
                 if( line.order_id.mining_payment_type == "80_pc" ) :
                     if( line.product_id.base_price ):
-                        base_price = line.contract_id.get_base_price_amount(line.coa_id.id , line.contract_id.id )
-                        line.price_unit = base_price * line.order_id.currency
+                        line.price_unit = line.order_id.hpm_price * line.order_id.currency
                     elif( line.product_id.element_id ):
                         line.price_unit = 0  
                 elif( line.order_id.mining_payment_type == "20_pc" ) : 
                     if( line.product_id.base_price ):
-                        base_price = line.contract_id.get_base_price_amount(line.coa_id.id , line.contract_id.id )
-                        line.price_unit = base_price * line.order_id.currency
+                        line.price_unit = line.order_id.hpm_price * line.order_id.currency
                     if( line.product_id.element_id ):
                         _coa_element_spec = None
                         _contract_specification = None

@@ -17,6 +17,7 @@
                 <field name="coa_id" />
                 <field name="currency" />
                 <field name="income_account_id" />
+                <field name="hpm_price" />
             </field>
         </field>
     </record>
