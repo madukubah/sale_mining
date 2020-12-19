@@ -75,7 +75,7 @@ class SaleOrder(models.Model):
 
     @api.onchange("coa_id", "contract_id" )
     def compute_hpm(self):
-        if( self.coa_id, self.contract_id ) :
+        if( self.coa_id and self.contract_id ) :
             base_price = self.contract_id.get_base_price_amount(self.coa_id.id , self.contract_id.id )
             self.hpm_price = base_price
 
