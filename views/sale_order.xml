@@ -7,6 +7,9 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="priority" eval="8"/>
         <field name="arch" type="xml">
+            <xpath expr="/form/header/button[@name='action_quotation_send']" position="before">
+                <button name="compute_hpm" states="draft,sale" string="Reload" class="btn-primary" type="object" />
+            </xpath>
             <field name="partner_id" position="after">
                 <field name="park_industry_id" />
                 <field name="contract_id" />

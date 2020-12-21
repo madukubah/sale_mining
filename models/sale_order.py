@@ -78,6 +78,7 @@ class SaleOrder(models.Model):
         if( self.coa_id and self.contract_id ) :
             base_price = self.contract_id.get_base_price_amount(self.coa_id.id , self.contract_id.id )
             self.hpm_price = base_price
+            self._set_orderline()
 
     @api.onchange("mining_payment_type", "currency", "hpm_price" )
     def _set_orderline(self):
