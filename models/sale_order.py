@@ -52,6 +52,7 @@ class SaleOrder(models.Model):
 		('20_pc', 'Full Payment 20 %'),
         ], string='Payment Type', required=True, copy=False, index=True, default='80_pc')
     currency = fields.Float( string="Currency (IDR)", required=True, default=0 )
+    hma_price = fields.Float( string="HMA Price (USD)", required=True, default=0, digits=0 )
     hpm_price = fields.Float( string="HPM + Shipping Cost", default=0, digits=dp.get_precision('Product Unit of Measure') )
 
     @api.multi
@@ -76,7 +77,7 @@ class SaleOrder(models.Model):
     @api.onchange("coa_id", "contract_id" )
     def compute_hpm(self):
         if( self.coa_id and self.contract_id ) :
-            base_price = self.contract_id.get_base_price_amount(self.coa_id.id , self.contract_id.id )
+            base_price = self.contract_id.get_base_price_amount(self.coa_id.id , self.contract_id.id, self.hma_price )
             self.hpm_price = base_price
             self._set_orderline()
 
