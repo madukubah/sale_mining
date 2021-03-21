@@ -9,13 +9,19 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
+    READONLY_STATES = {
+        'draft': [('readonly', False)] ,
+        'sale': [('readonly', False)] ,
+        'done': [('readonly', True)] ,
+        'cancel': [('readonly', True)] ,
+    }
+
     shipping_id = fields.Many2one("shipping.order", 
         string="Shipping", 
         required=True, store=True, 
         ondelete="restrict", 
         domain=[ ('state','=',"confirm") ], 
-        readonly=True, 
-        states={'draft': [('readonly', False)]}  
+        states=READONLY_STATES
         )
     coa_id = fields.Many2one("qaqc.coa.order", 
         string="QAQC COA", 
@@ -23,8 +29,8 @@ class SaleOrder(models.Model):
         store=True, 
         ondelete="restrict",
         # domain=[ "&",('state','=',"final") , ('surveyor_id.surveyor','=',"intertek") ], 
-        readonly=True, 
-        # states={'draft': [('readonly', False)]}  
+        # readonly=True, 
+        states=READONLY_STATES
         )
     
     income_account_id = fields.Many2one('account.account', 
