@@ -11,7 +11,7 @@ class SaleOrder(models.Model):
 
     READONLY_STATES = {
         'draft': [('readonly', False)] ,
-        'sale': [('readonly', False)] ,
+        'sale': [('readonly', True)] ,
         'done': [('readonly', True)] ,
         'cancel': [('readonly', True)] ,
     }
