@@ -23,7 +23,7 @@ class StockPicking(models.Model):
                 coa = QaqcCoaSudo.search([ ("id", '=', sale_id.coa_id.id ) ])
                 shipping = ShippingSudo.search([ ("id", '=', sale_id.shipping_id.id ) ])
                 barge_activity = BargeActivitySudo.search([ ("id", '=', shipping.barge_activity_id.id ) ])
-                if( coa and shipping and barge_activity ):
+                if( coa and shipping ):
                     coa.action_done()
                     shipping.action_done()
                     barge_activity.action_done()
