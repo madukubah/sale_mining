@@ -58,7 +58,7 @@ class SaleOrder(models.Model):
 		('20_pc', 'Full Payment 20 %'),
         ], string='Payment Type', required=True, copy=False, index=True, default='80_pc')
     currency = fields.Float( string="Currency (IDR)", required=True, default=0 )
-    hma_price = fields.Float( string="HMA Price (USD)", required=True, default=0, digits=0 )
+    hma_price = fields.Float( string="HMA Price (IDR)", required=True, default=0, digits=0 )
     hpm_price = fields.Float( string="HPM + Shipping Cost", default=0, digits=dp.get_precision('Product Unit of Measure'), readonly=True )
 
     @api.multi
